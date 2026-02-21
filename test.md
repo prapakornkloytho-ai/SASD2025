@@ -3,30 +3,51 @@
 ---
 
 ## Objective (วัตถุประสงค์)
-การทดลองนี้ศึกษาผลกระทบของ **มาตรวัดระยะทาง (Distance Metrics)** และ **วิธีการเชื่อมโยง (Linkage)** ต่อประสิทธิภาพของการจัดกลุ่มข้อมูลด้วย **Agglomerative Clustering**  
-โดยเปรียบเทียบ **Euclidean / Manhattan / Cosine** ภายใต้ **Average vs Complete linkage** บนชุดข้อมูลหลายประเภท (Synthetic และ Real-world)
+
+การทดลองนี้มีวัตถุประสงค์เพื่อศึกษาผลกระทบของ **มาตรวัดระยะทาง (Distance Metrics)** และ **วิธีการเชื่อมโยงคลัสเตอร์ (Linkage Methods)** ต่อประสิทธิภาพของการจัดกลุ่มข้อมูลด้วย **Agglomerative Clustering**  
+
+โดยทำการเปรียบเทียบระหว่าง **Euclidean, Manhattan และ Cosine distance** ภายใต้ **Average และ Complete linkage** บนชุดข้อมูลหลายประเภท ทั้ง **Synthetic datasets** และ **Real-world datasets**
+
+นอกจากนี้ การทดลองนี้ยังมุ่งศึกษาผลกระทบเชิงปฏิสัมพันธ์ (*interaction effect*) ระหว่าง distance metric และ linkage strategy แทนการประเมิน metric แบบแยกเดี่ยว เพื่อทำความเข้าใจว่าการจับคู่ระหว่าง metric และ linkage ส่งผลต่อโครงสร้างของคลัสเตอร์อย่างไร
 
 ---
 
 ## Experimental Design (การออกแบบการทดลอง)
 
 ### A) Algorithm & Preprocessing (อัลกอริทึมและการเตรียมข้อมูล)
-- **Algorithm:** Agglomerative Clustering  
-- **Configurations Tested:** 3 Distance Metrics × 2 Linkages = **6 รูปแบบการทดลอง**
+
+- **Algorithm:** ใช้ Agglomerative Clustering (Hierarchical Clustering)
+- **Configurations Tested:** ทดสอบทั้งหมด 3 Distance Metrics × 2 Linkages รวมเป็น **6 รูปแบบการทดลอง**
   - Distance Metrics: `euclidean`, `manhattan`, `cosine`
-  - Linkage: `average`, `complete`
-- **Scaling:** ใช้ `StandardScaler` ($\mu=0,\ \sigma=1$) กับทุกชุดข้อมูล เพื่อลดผลกระทบจากสเกลที่ต่างกัน
-- **Sampling (Memory Constraint):** หากข้อมูลมากกว่า 30,000 แถว จะสุ่ม downsample เหลือ 30,000 ด้วย `random_state=42` เพื่อความทำซ้ำได้ (reproducibility)
-
-### B) Variables (ตัวแปรในการทดลอง)
-- **Independent Variables:** Distance metric และ Linkage method
-- **Controlled Variable:** จำนวนคลัสเตอร์คงที่ที่ $K=3$ ทุกการทดลอง เพื่อโฟกัสผลกระทบจาก metric/linkage
-  - *หมายเหตุ:* การ fix $K=3$ ช่วยควบคุมตัวแปร แต่บาง dataset อาจไม่ได้มีโครงสร้างตาม 3 กลุ่มจริง จึงอาจไม่ใช่ค่าที่เหมาะที่สุดสำหรับทุกชุดข้อมูล
-
-### C) Evaluation Metrics (ตัวชี้วัด)
-- **Internal Validation:** Silhouette Score (ช่วง -1 ถึง 1) วัด cohesion/separation ของคลัสเตอร์
-- **External Validation (เฉพาะชุดที่มี label):**
-  - Adjusted Rand Index (ARI)
-  - Normalized Mutual Information (NMI)
+  - Linkage Methods: `average`, `complete`
+- **Scaling:** ทุกชุดข้อมูลผ่านการปรับมาตรฐานด้วย `StandardScaler` ($\mu = 0,\ \sigma = 1$) เพื่อลดผลกระทบจากความแตกต่างของสเกล ซึ่งมีผลโดยตรงต่อการคำนวณระยะทาง
+- **Sampling (Memory Constraint):** หากชุดข้อมูลมีขนาดมากกว่า 30,000 แถว จะทำการสุ่มตัวอย่างแบบ Random Downsampling เหลือ 30,000 แถว โดยกำหนด `random_state = 42` เพื่อให้ผลการทดลองสามารถทำซ้ำได้ (*reproducibility*)
 
 ---
+
+### B) Variables (ตัวแปรในการทดลอง)
+
+- **Independent Variables (ตัวแปรต้น):**
+  - ประเภทของ Distance Metric
+  - ประเภทของ Linkage Method
+
+- **Controlled Variable (ตัวแปรควบคุม):**
+  - กำหนดจำนวนคลัสเตอร์คงที่ที่ $K = 3$ สำหรับทุกการทดลอง  
+    เพื่อควบคุมความซับซ้อนของโมเดล และมุ่งเน้นศึกษาผลกระทบจาก metric และ linkage โดยตรง  
+
+  *หมายเหตุ:* การกำหนด $K = 3$ ช่วยควบคุมตัวแปรในการเปรียบเทียบ แต่บาง dataset อาจไม่ได้มีโครงสร้างที่เหมาะสมที่สุดที่ 3 คลัสเตอร์ ดังนั้นค่าดังกล่าวอาจไม่ใช่ optimal number of clusters สำหรับทุกชุดข้อมูล
+
+---
+
+### C) Evaluation Metrics (ตัวชี้วัดประสิทธิภาพ)
+
+การประเมินผลแบ่งออกเป็น 2 มิติหลัก ได้แก่
+
+- **Internal Validation**
+  - ใช้ **Silhouette Score** (ช่วงค่า -1 ถึง 1) เพื่อวัดความหนาแน่นภายในกลุ่ม (cohesion) และระยะห่างระหว่างกลุ่ม (separation)
+
+- **External Validation** (เฉพาะชุดข้อมูลที่มี Ground Truth Labels)
+  - **Adjusted Rand Index (ARI)**
+  - **Normalized Mutual Information (NMI)**
+
+การใช้ทั้ง internal และ external metrics ร่วมกันช่วยให้สามารถประเมินคุณภาพของ clustering ได้ทั้งในเชิงโครงสร้างเชิงเรขาคณิตของข้อมูล และในเชิงความสอดคล้องกับ label จริงของข้อมูล
